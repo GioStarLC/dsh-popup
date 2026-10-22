@@ -5,13 +5,21 @@
 #   tools/make-demo-gif.sh <recording> [start] [duration] [width]
 #
 # Defaults: start 00:00:03, duration 10s, width 800px. The result goes to
-# docs/media/demo.gif and must stay under 8 MB, which is the budget the
-# storyboard in docs/demo-storyboard.md works to. When a pass is too big the
-# script steps the frame rate down and tries again: 24 -> 18 -> 15 -> 12 fps.
+# docs/media/demo.gif, which is git-ignored on purpose: the demo is hosted as a
+# GitHub attachment and README points at that URL (see docs/demo-storyboard.md).
+# The repo keeps the recipe, not the binary.
 #
-# Accepted inputs are anything ffmpeg can read: the original .mov/.mp4 screen
-# capture is best, because a GIF that has already been through one palette
-# conversion loses colour before this script ever sees it.
+# Budget: 4.5 MB, measured, not aspirational. A 10s / 800px clip of this UI
+# lands at 4.75 MB at 12 fps and 4.07 MB at 10 fps; gifsicle -O3 --lossy only
+# buys another 6%, because ffmpeg already emits transparency-diffed frames.
+# Below ~4 MB you are not compressing better, you are showing less: either a
+# narrower frame (text stops being crisp when the README scales it back up) or
+# a shorter clip. A budget the encoder cannot reach is a bug in the budget.
+#
+# When a pass is too big the script spends pixels in this order: first fewer
+# frames at full width, then a narrower frame. The bubble animation is the
+# point of the clip, so dropping 24 -> 10 fps survives better than dropping
+# 800 -> 640 px.
 set -euo pipefail
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
@@ -33,26 +41,46 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 out=${OUT:-"$root/docs/media/demo.gif"}
 mkdir -p "$(dirname "$out")"
 
+budget=4500000
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-for fps in 24 18 15 12; do
-  ffmpeg -v error -ss "$start" -t "$duration" -i "$input" \
-    -vf "fps=$fps,scale=$width:-1:flags=lanczos,palettegen=max_colors=192:stats_mode=diff" \
+ladder=(
+  "$width:24"
+  "$width:18"
+  "$width:15"
+  "$width:12"
+  "$width:10"
+  "$width:8"
+  "$((width * 4 / 5)):12"
+  "$((width * 7 / 10)):12"
+  "$((width * 7 / 10)):8"
+)
+
+for spec in "${ladder[@]}"; do
+  w=${spec%%:*}
+  fps=${spec##*:}
+
+  ffmpeg -nostdin -v error -ss "$start" -t "$duration" -i "$input" \
+    -vf "fps=$fps,scale=$w:-1:flags=lanczos,palettegen=max_colors=128:stats_mode=diff" \
     -y "$tmp/palette.png"
 
-  ffmpeg -v error -ss "$start" -t "$duration" -i "$input" -i "$tmp/palette.png" \
-    -lavfi "fps=$fps,scale=$width:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=4" \
+  ffmpeg -nostdin -v error -ss "$start" -t "$duration" -i "$input" -i "$tmp/palette.png" \
+    -lavfi "fps=$fps,scale=$w:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=4" \
     -loop 0 -y "$tmp/out.gif"
 
   size=$(wc -c <"$tmp/out.gif")
-  if [ "$size" -le 8000000 ]; then
-    mv "$tmp/out.gif" "$out"
-    echo "wrote $out (${fps}fps, $((size / 1000)) KB)"
+  if [ "$size" -le "$budget" ]; then
+    cp "$tmp/out.gif" "$out"
+    echo "wrote $out (${w}px, ${fps}fps, $((size / 1000)) KB)"
+    echo
+    echo "next: upload it as a GitHub attachment (drag it into an issue body or the"
+    echo "README editor), then put the resulting user-attachments URL in README."
+    echo "this file is git-ignored and must not be committed."
     exit 0
   fi
-  echo "too big at ${fps}fps ($((size / 1000)) KB), trying fewer frames" >&2
+  echo "too big at ${w}px/${fps}fps ($((size / 1000)) KB), trying a smaller pass" >&2
 done
 
-echo "error: still over 8 MB at 12fps; shorten the clip or pass a smaller width" >&2
+echo "error: still over 4.5 MB; shorten the clip (-t 8) or pass a smaller width" >&2
 exit 1

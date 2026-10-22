@@ -24,6 +24,7 @@ browser check actually ran on your machine.
 | `tools/check-client-bundle.mjs` | Boot contract and anchor round-tripping, no browser. |
 | `tools/check-note-flow.mjs` | The feature, in a real browser with real React. |
 | `cordis.patch.yml` | The bundle patch that inserts the plugin row. |
+| `docs/media/` | Local scratch for demo media. Git-ignored on purpose: README points at a GitHub attachment URL instead, so the repo never carries the binary. See `docs/demo-storyboard.md`. |
 
 There is no build step. `lib/client.js` is loaded exactly as it is written, and
 a factory-body `ReferenceError` blocks the whole web boot rather than just this

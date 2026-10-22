@@ -11,8 +11,8 @@
 | 帧率 | 60fps；动效（气泡轻弹、光环）在 30fps 下会糊 |
 | 声音 | 无音轨，靠字幕 |
 | 时长 | 主片 30 秒 |
-| GIF | 一张：0:03–0:13（选中 → 卡片 → 同意），10 秒，800px，≤ 8MB |
-| 归档 | `docs/media/demo.mp4`、`docs/media/demo.gif` |
+| GIF | 一张：0:03–0:13（选中 → 卡片 → 同意），10 秒，800px，≤ 4.5MB |
+| 归档 | `docs/media/` 是本地工作目录，**不进仓库**；README 引用的是 GitHub 附件 URL，见「发布演示」 |
 
 ## 录制前
 
@@ -92,7 +92,29 @@ ffmpeg -ss 23 -t 5 -i docs/media/demo.mp4 \
 ls -lh docs/media/demo.gif
 ```
 
-超 8MB 就降帧而不是缩画面：`fps=10`，再不行 `-t 8`。
+这张片子的地板价是 4MB 左右，不是 1MB。实测同一段 10 秒素材：800px/12fps 是 4.75MB，800px/10fps 是 4.07MB，`gifsicle -O3 --lossy` 再省 6%——因为 ffmpeg 已经用透明帧做差分，没有多少冗余可挖。原因在内容不在编码：深色 UI 的文字抗锯齿和阴影几乎不给 LZW 留空间。
+
+所以想让 gif 更小，只能减内容：
+
+- `-t 8` 缩短，或降到 640px；
+- 缩画面比降帧更伤：正文在 800px 下刚好清楚，缩到 640px 后 README 再放大回去就糊了；
+- `tools/make-demo-gif.sh` 就走这条梯度（800px 从 24fps 退到 8fps，再退 640px），预算 4.5MB。
+
+视频是另一个数量级：同样 10 秒，mp4 不到 1MB。gif 只做首屏那 10 秒，完整演示给链接。
+
+## 发布演示
+
+README 里不存 gif，只存它的 URL。发布流程：
+
+1. 在仓库里开一个 issue（标题写 `demo asset`，别关），把 `docs/media/demo.gif` 拖进正文。
+   GitHub 会把它传到 user-attachments，插入一条
+   `https://github.com/user-attachments/assets/<uuid>`。
+2. 复制那条 URL，替换 README 第 17 行的 `src`。
+3. 正文里什么都不用写，issue 提交后保持打开——附件挂在 issue 上，关掉不一定失效，但别赌。
+
+为什么不用 release 资产：那条链路按二进制下载走（`application/octet-stream`），README 的图片要经 GitHub 的 Camo 代理，类型不对就是碎图，而且是在别人浏览时才碎。附件走的是图片类型，稳，也不占 release 页面的语义。
+
+为什么不用 Git LFS：LFS 免费额度 1GB/月流量，一个 6MB 的 gif 被看 170 次就烧光，流量超了 README 直接裂图。
 
 字幕走剪辑软件，不要指望这台机器上的 ffmpeg：剪映 / DaVinci / Final Cut 都能直接导入
 [`demo-subtitles.srt`](demo-subtitles.srt)，中文字体和描边在软件里调比滤镜省事。命令行烧字幕
@@ -110,11 +132,11 @@ ffmpeg -i demo.mp4 -vf "subtitles=demo-subtitles.srt" -c:v libx264 -crf 20 -pix_
 - [ ] 高亮是黄底深字，没有变成浏览器默认选区色。
 - [ ] 画面里没有真实 API key、私人会话标题、桌面通知。
 - [ ] 气泡按钮那 1.5 秒没被加速，也没被剪成「卡住不动」。
-- [ ] `demo.gif` 不超过 8MB，看得出「选中 → 气泡 → 卡片 → 同意」四步。
+- [ ] `demo.gif` 不超过 4.5MB，看得出「选中 → 气泡 → 卡片 → 同意」四步。
 
 ## 拍不出来时先查这些
 
-- 入口只出现在**最新一条助手回复**的正文里；选中更早轮次、侧边栏、文档预览都不会有按钮，这是设计。
+- 入口出现在**助手回复**的正文里（任意一轮）；选中用户消息、侧边栏、文档预览都不会有按钮，这是设计。
 - 镜头 6 需要输入框为空；里面有字时它不会动你的草稿，只会脉冲按钮提示「有 N 条批注待填入」。
 - 自动填入被关掉时，进空输入框草稿不会自己出现。
 - 插件刚装完要刷新窗口，否则客户端 bundle 还没进启动图。
