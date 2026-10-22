@@ -27,13 +27,14 @@
 
 ## 安装
 
-需要支持客户端插件的 DSH。
+需要支持客户端插件的 DSH。按你用的那一端选 profile：桌面端用 `desktop`，浏览器里跑 `dsh web` 用 `web`。
 
 ```sh
-dsh plugin --profile web add github:GioStarLC/dsh-popup
+dsh plugin --profile desktop add github:GioStarLC/dsh-popup   # 桌面端（先退出应用）
+dsh plugin --profile web     add github:GioStarLC/dsh-popup   # dsh web
 ```
 
-或者克隆到本地，装本地路径：
+也可以克隆到本地，装本地路径：
 
 ```sh
 git clone https://github.com/GioStarLC/dsh-popup.git
