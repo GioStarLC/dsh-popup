@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# check output
+test-results/
+playwright-report/
+
+# local scratch
+.probe/
+.DS_Store
+
+# logs
+*.log
+npm-debug.log*
+
+# build artefacts
+*.tgz

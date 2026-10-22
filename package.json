@@ -1,0 +1,69 @@
+{
+  "name": "dsh-popup",
+  "version": "0.1.0",
+  "description": "Select passages in a DeepSeek Harness conversation, answer them inline, and hand the collected set to the composer as a quoted draft.",
+  "license": "MIT",
+  "author": "GioStarLC (https://github.com/GioStarLC)",
+  "homepage": "https://github.com/GioStarLC/dsh-popup#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GioStarLC/dsh-popup.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GioStarLC/dsh-popup/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "client-plugin",
+    "annotation",
+    "highlight",
+    "composer",
+    "markdown"
+  ],
+  "type": "module",
+  "icon": "./icon.svg",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "npm run check:bundle && npm run check:flow",
+    "check:bundle": "node tools/check-client-bundle.mjs",
+    "check:flow": "node tools/check-note-flow.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.59.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  }
+}
