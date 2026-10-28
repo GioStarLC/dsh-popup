@@ -1,4 +1,11 @@
 <p align="center">
+  <a href="https://github.com/GioStarLC/dsh-nudge"><img alt="推荐使用 dsh-nudge" src="https://img.shields.io/badge/%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8-dsh--nudge-ff6b35?style=for-the-badge&logo=github"></a>
+</p>
+
+> [!TIP]
+> **建议优先使用 [dsh-nudge](https://github.com/GioStarLC/dsh-nudge)**：批注汇总窗口、快速回复等更完整的用法都在那里。dsh-popup 保留最轻的一种：选中原文，就地作答。
+
+<p align="center">
   <img src="./icon.svg" width="72" alt="dsh-popup">
 </p>
 
